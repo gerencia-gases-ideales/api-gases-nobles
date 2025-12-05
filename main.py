@@ -1,8 +1,14 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+from typing import Optional
 
-app = FastAPI(title="Mi API", version="1.0.0")
+app = FastAPI(title="GASES NOBLES", version="1.0.0")
 
+# Constante de gases
+R = 0.082
+
+# Página de inicio
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return """
@@ -10,57 +16,43 @@ async def root():
     <html>
         <head>
             <title>FastAPI - Inicio</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    max-width: 800px;
-                    margin: 50px auto;
-                    padding: 20px;
-                    text-align: center;
-                }
-                h1 { color: #009688; }
-                .endpoint {
-                    background: #f5f5f5;
-                    padding: 15px;
-                    margin: 10px 0;
-                    border-radius: 5px;
-                    text-align: left;
-                }
-                code {
-                    background: #333;
-                    color: #fff;
-                    padding: 2px 8px;
-                    border-radius: 3px;
-                }
-            </style>
         </head>
         <body>
-            <h1>🚀 FastAPI - Aplicación Base</h1>
-            <p>Tu API está funcionando correctamente</p>
-            
-            <div class="endpoint">
-                <h3>Endpoints disponibles:</h3>
-                <p><code>GET /</code> - Esta página</p>
-                <p><code>GET /api/hello</code> - Saludo JSON</p>
-                <p><code>GET /api/items/{item_id}</code> - Obtener item por ID</p>
-                <p><code>GET /docs</code> - Documentación interactiva (Swagger)</p>
-                <p><code>GET /redoc</code> - Documentación alternativa</p>
-            </div>
+            <h1>API de Ley de Gases Ideales</h1>
+            <p>Tu API está funcionando correctamente.</p>
+            <p>Visita <a href="/docs">/docs</a> para usar la documentación interactiva.</p>
         </body>
     </html>
     """
 
-@app.get("/api/hello")
-async def hello():
-    return {"mensaje": "¡Hola desde FastAPI!"}
 
-@app.get("/api/items/{item_id}")
-async def get_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "query": q}
+# Modelo para la API
+class GasRequest(BaseModel):
+    P: Optional[float] = None
+    V: Optional[float] = None
+    n: Optional[float] = None
+    T: Optional[float] = None
 
-@app.post("/api/items")
-async def create_item(name: str, price: float):
+
+# Endpoint principal
+@app.post("/api/calcular-gas")
+async def calcular_gas(req: GasRequest):
+    valores = [req.P, req.V, req.n, req.T]
+    missing = sum(1 for v in valores if v is None)
+
+    if missing != 1:
+        return {"error": "Debes dejar exactamente UNA variable vacía para calcularla."}
+
+    P, V, n, T = req.P, req.V, req.n, req.T
+
+    if P is None:
+        P = (n * R * T) / V
+    elif V is None:
+        V = (n * R * T) / P
+    elif T is None:
+        T = (P * V) / (n * R)
+
     return {
-        "mensaje": "Item creado",
-        "item": {"name": name, "price": price}
+        "P": P, "V": V, "n": n, "T": T, "R": R,
+        "mensaje": "Cálculo realizado usando PV = nRT"
     }
