@@ -1,9 +1,19 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 
 app = FastAPI(title="GASES NOBLES", version="1.0.0")
+
+# Configuración CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite todas las solicitudes de cualquier origen
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos los métodos HTTP
+    allow_headers=["*"],  # Permite todos los headers
+)
 
 # Constante de gases
 R = 0.082
@@ -56,3 +66,4 @@ async def calcular_gas(req: GasRequest):
         "P": P, "V": V, "n": n, "T": T, "R": R,
         "mensaje": "Cálculo realizado usando PV = nRT"
     }
+
